@@ -1,0 +1,12 @@
+mdawh
+-----
+
+The MDA webhook tool.
+
+Read mail from stdin, send a webhook with the mail body, from, date and
+content-type headers to a specified URL.
+
+Configure OpenSMTPD like so:
+
+    action webhook mda "path/to/mdawh"
+    match from any for domain "mydoma.in" action webhook
