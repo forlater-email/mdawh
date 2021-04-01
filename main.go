@@ -69,4 +69,5 @@ func main() {
 		log.Fatal(err)
 	}
 	makeReq(j)
+	log.Printf("sent webhook: %v\n", newmail.From)
 }
