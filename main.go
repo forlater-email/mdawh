@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/emersion/go-message/mail"
 )
@@ -16,9 +17,10 @@ import (
 type P map[string]string
 
 type Mail struct {
-	From  string
-	Date  string
-	Parts []P
+	From    string
+	Date    string
+	ReplyTo string
+	Parts   []P
 }
 
 func makeReq(j []byte) {
@@ -39,6 +41,7 @@ func main() {
 	newmail := Mail{}
 	newmail.Date = mr.Header.Get("Date")
 	newmail.From = mr.Header.Get("From")
+	newmail.ReplyTo = mr.Header.Get("Reply-To")
 
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +56,7 @@ func main() {
 		}
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
-			ct := p.Header.Get("Content-Type")
+			ct := strings.Split(p.Header.Get("Content-Type"), ";")[0]
 			b, _ := ioutil.ReadAll(p.Body)
 			part := P{ct: string(b)}
 			newmail.Parts = append(newmail.Parts, part)
