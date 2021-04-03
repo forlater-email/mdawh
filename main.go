@@ -35,6 +35,13 @@ func makeReq(j []byte) {
 }
 
 func main() {
+	f, err := os.OpenFile("mdawh.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
+
 	r := bufio.NewReader(os.Stdin)
 	mr, err := mail.CreateReader(r)
 
