@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -14,13 +13,11 @@ import (
 	"github.com/emersion/go-message/mail"
 )
 
-type P map[string]string
-
 type Mail struct {
 	From    string
 	Date    string
 	ReplyTo string
-	Parts   []P
+	Parts   map[string]string
 }
 
 func makeReq(j []byte) {
@@ -54,6 +51,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	parts := make(map[string]string)
 	for {
 		p, err := mr.NextPart()
 		if err == io.EOF {
@@ -64,13 +62,13 @@ func main() {
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
 			ct := strings.Split(p.Header.Get("Content-Type"), ";")[0]
-			b, _ := ioutil.ReadAll(p.Body)
-			part := P{ct: string(b)}
-			newmail.Parts = append(newmail.Parts, part)
+			b, _ := io.ReadAll(p.Body)
+			parts[ct] = string(b)
+			newmail.Parts = parts
 
 		case *mail.AttachmentHeader:
 			filename, _ := h.Filename()
-			log.Printf("Got attachment: %v\n", filename)
+			log.Printf("got attachment: %v\n", filename)
 		}
 	}
 
