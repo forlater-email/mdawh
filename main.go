@@ -17,6 +17,7 @@ type Mail struct {
 	From    string
 	Date    string
 	ReplyTo string
+	Body    string
 	Parts   map[string]string
 }
 
@@ -42,10 +43,10 @@ func main() {
 	r := bufio.NewReader(os.Stdin)
 	mr, err := mail.CreateReader(r)
 
-	newmail := Mail{}
-	newmail.Date = mr.Header.Get("Date")
-	newmail.From = mr.Header.Get("From")
-	newmail.ReplyTo = mr.Header.Get("Reply-To")
+	m := Mail{}
+	m.Date = mr.Header.Get("Date")
+	m.From = mr.Header.Get("From")
+	m.ReplyTo = mr.Header.Get("Reply-To")
 
 	if err != nil {
 		log.Fatal(err)
@@ -62,9 +63,14 @@ func main() {
 		switch h := p.Header.(type) {
 		case *mail.InlineHeader:
 			ct := strings.Split(p.Header.Get("Content-Type"), ";")[0]
+			// We didn't find any Content-Type header.
 			b, _ := io.ReadAll(p.Body)
-			parts[ct] = string(b)
-			newmail.Parts = parts
+			if len(ct) == 0 {
+				m.Body = string(b)
+			} else {
+				parts[ct] = string(b)
+				m.Parts = parts
+			}
 
 		case *mail.AttachmentHeader:
 			filename, _ := h.Filename()
@@ -72,10 +78,10 @@ func main() {
 		}
 	}
 
-	j, err := json.Marshal(newmail)
+	j, err := json.Marshal(m)
 	if err != nil {
 		log.Fatal(err)
 	}
 	makeReq(j)
-	log.Printf("sent webhook: %v\n", newmail.From)
+	log.Printf("sent webhook: %v\n", m.From)
 }
