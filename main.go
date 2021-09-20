@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"strings"
@@ -32,6 +33,17 @@ func makeReq(j []byte) {
 	defer res.Body.Close()
 }
 
+// Decodes a RFC 2047 encoded word.
+func decode(s string) (string, error) {
+	dec := mime.WordDecoder{}
+	header, err := dec.DecodeHeader(s)
+	if err != nil {
+		return "", err
+	}
+
+	return header, nil
+}
+
 func main() {
 	f, err := os.OpenFile("mdawh.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -45,7 +57,12 @@ func main() {
 
 	m := Mail{}
 	m.Date = mr.Header.Get("Date")
-	m.From = mr.Header.Get("From")
+	from, err := decode(mr.Header.Get("From"))
+	if err != nil {
+		m.From = mr.Header.Get("From")
+	} else {
+		m.From = from
+	}
 	m.ReplyTo = mr.Header.Get("Reply-To")
 
 	if err != nil {
